@@ -163,6 +163,15 @@ int64_t lzbench_memcpy(char *inbuf, size_t insize, char *outbuf, size_t outsize,
 #endif // BENCH_REMOVE_KANZI
 
 
+#ifndef BENCH_REMOVE_IGZIP
+    int64_t lzbench_igzip_compress(char *inbuf, size_t insize, char *outbuf, size_t outsize, codec_options_t *codec_options);
+    int64_t lzbench_igzip_decompress(char *inbuf, size_t insize, char *outbuf, size_t outsize, codec_options_t *codec_options);
+#else
+    #define lzbench_igzip_compress NULL
+    #define lzbench_igzip_decompress NULL
+#endif
+
+
 #ifndef BENCH_REMOVE_LIBDEFLATE
     int64_t lzbench_libdeflate_compress(char *inbuf, size_t insize, char *outbuf, size_t outsize, codec_options_t *codec_options);
     int64_t lzbench_libdeflate_decompress(char *inbuf, size_t insize, char *outbuf, size_t outsize, codec_options_t *codec_options);

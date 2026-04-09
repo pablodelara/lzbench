@@ -1,0 +1,3 @@
+[submodule "lz/isa-l"]
+	path = lz/isa-l
+	url = https://github.com/intel/isa-l.git

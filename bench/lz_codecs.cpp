@@ -281,6 +281,67 @@ int64_t lzbench_kanzi_decompress(char *inbuf, size_t insize, char *outbuf, size_
 
 
 
+#ifndef BENCH_REMOVE_IGZIP
+#include "lz/isa-l/include/igzip_lib.h"
+
+int64_t lzbench_igzip_compress(char *inbuf, size_t insize, char *outbuf, size_t outsize, codec_options_t *codec_options)
+{
+    struct isal_zstream stream;
+    isal_deflate_stateless_init(&stream);
+
+    stream.next_in = (uint8_t*)inbuf;
+    stream.avail_in = insize;
+    stream.next_out = (uint8_t*)outbuf;
+    stream.avail_out = outsize;
+    stream.end_of_stream = 1;
+    stream.level = codec_options->level;
+    stream.flush = NO_FLUSH;
+
+    uint8_t *level_buf = NULL;
+    if (codec_options->level > 0) {
+        size_t level_buf_size;
+        switch (codec_options->level) {
+            case 1:  level_buf_size = ISAL_DEF_LVL1_DEFAULT; break;
+            case 2:  level_buf_size = ISAL_DEF_LVL2_DEFAULT; break;
+            case 3:  level_buf_size = ISAL_DEF_LVL3_DEFAULT; break;
+            default: level_buf_size = ISAL_DEF_LVL1_DEFAULT; break;
+        }
+        level_buf = (uint8_t*)malloc(level_buf_size);
+        if (!level_buf)
+            return 0;
+        stream.level_buf = level_buf;
+        stream.level_buf_size = level_buf_size;
+    }
+
+    int ret = isal_deflate_stateless(&stream);
+    free(level_buf);
+
+    if (ret != COMP_OK)
+        return 0;
+
+    return stream.total_out;
+}
+
+int64_t lzbench_igzip_decompress(char *inbuf, size_t insize, char *outbuf, size_t outsize, codec_options_t *codec_options)
+{
+    struct inflate_state state;
+    isal_inflate_init(&state);
+
+    state.next_in = (uint8_t*)inbuf;
+    state.avail_in = insize;
+    state.next_out = (uint8_t*)outbuf;
+    state.avail_out = outsize;
+
+    int ret = isal_inflate(&state);
+    if (ret != ISAL_DECOMP_OK)
+        return 0;
+
+    return state.total_out;
+}
+#endif // BENCH_REMOVE_IGZIP
+
+
+
 #ifndef BENCH_REMOVE_LIBDEFLATE
 #include "lz/libdeflate/libdeflate.h"
 int64_t lzbench_libdeflate_compress(char *inbuf, size_t insize, char *outbuf, size_t outsize, codec_options_t *codec_options)

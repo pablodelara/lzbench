@@ -266,6 +266,13 @@ else
 endif
 
 
+ifeq "$(DONT_BUILD_IGZIP)" "1"
+    DEFINES += -DBENCH_REMOVE_IGZIP
+else
+    LDFLAGS += lz/isa-l/bin/isa-l.a
+endif
+
+
 ifeq "$(DONT_BUILD_KANZI)" "1"
     DEFINES += -DBENCH_REMOVE_KANZI
 else
@@ -814,9 +821,9 @@ $(LIZARD_FILES): %.o : %.c
 	@$(MKDIR) $(dir $@)
 	$(CC) $(CFLAGS_O2) $< -c -o $@
 
-$(LZ_CODECS): %.o : %.cpp
+$(LZ_CODECS): %.o : %.cpp ISAL_LIB
 	@$(MKDIR) $(dir $@)
-	$(CXX) $(CXXFLAGS) -Ilz -Ilz/brotli/include -Ilz/zxc/src/lib/vendors $< -c -o $@
+	$(CXX) $(CXXFLAGS) -Ilz -Ilz/isa-l/include -Ilz/brotli/include -Ilz/zxc/src/lib/vendors $< -c -o $@
 
 $(LZHAM_FILES): %.o : %.cpp
 	@$(MKDIR) $(dir $@)
@@ -888,6 +895,12 @@ $(BSC_CUDA_FILES): %.cu.o: %.cu
 	@$(MKDIR) $(dir $@)
 	$(CUDA_CC) $(CUDA_CXXFLAGS) $(CXXFLAGS) $(BSC_FLAGS) -c $< -o $@
 
+ISAL_LIB:
+ifneq ($(DONT_BUILD_IGZIP),1)
+	@echo "Building isa-l..."
+	$(MAKE) -C lz/isa-l -f Makefile.unx lib
+endif
+
 DENSITY_LIB:
 ifneq ($(DONT_BUILD_DENSITY),1)
 	@echo "Building Density..."
@@ -900,3 +913,8 @@ clean:
 	rm -rf lzbench lzbench.exe
 	find . -type f -name "*.o" -exec rm -f {} +
 	rm -rf $(DENSITY_SRC_DIR)target/
+ifneq ($(DONT_BUILD_IGZIP),1)
+	$(MAKE) -C lz/isa-l -f Makefile.unx clean
+endif
+
+.PHONY: ISAL_LIB DENSITY_LIB clean
